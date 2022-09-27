@@ -1,0 +1,84 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract DeCollegeTracker {
+
+    address owner;    
+    constructor(){
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner(){
+        require(owner == msg.sender);
+        _;
+    }
+
+    struct role{
+        address admin;
+    }
+    mapping(address => role)public roles;
+
+    struct addCollege{
+        string collegeName;
+        address colAddress;
+        address admin;
+        string colRegNum;
+        bool permToAddStud; 
+        uint8 studentCount; 
+    }
+    mapping(address=> addCollege)public newCollege;
+
+    struct addStudent{
+        address collegeAdd;
+        string studentName;
+        uint120 phoneNo;
+        string courseName;
+    }
+    mapping(string=> addStudent)public newStudent;
+
+    function addNewCollege(string memory _cName, address _cAdd, address _admin, string memory _cRegNo) public{
+            require(owner == _admin, "It is not an admin User");
+            newCollege[msg.sender].collegeName = _cName;
+            newCollege[msg.sender].colAddress = _cAdd;
+            newCollege[msg.sender].colRegNum = _cRegNo;
+            newCollege[msg.sender].permToAddStud = true;
+            newCollege[msg.sender].studentCount = 0;
+    }
+
+    function addNewStudentToCollege(address _add, string memory _sName, uint120 _sPhNo, string memory _CourseName) public{
+            require(newCollege[msg.sender].permToAddStud == true, "Permission denied: College Blocked, can't add new Student");
+            newStudent[_sName].collegeAdd = _add;
+            newStudent[_sName].studentName = _sName;
+            newStudent[_sName].phoneNo = _sPhNo;
+            newStudent[_sName].courseName = _CourseName;
+            newCollege[_add].studentCount++;        
+    }
+
+    function getNumOfStudentForCol(address _add) public view returns(uint8){
+        return(newCollege[_add].studentCount);
+    }
+
+    function changeStudentCourse(address _add, string memory _sName, string memory _newCourse) public{
+            require(newCollege[msg.sender].permToAddStud == true, "Permission denied: College Blocked, can't modify Student details");
+            newStudent[_sName].collegeAdd = _add;
+            newStudent[_sName].studentName = _sName;
+            newStudent[_sName].courseName = _newCourse;
+    }
+
+    function blockColToAddNewStudent(address _adminAdd) public {
+        roles[_adminAdd].admin = _adminAdd;
+        require(owner == roles[_adminAdd].admin, "It is not an admin User");
+        if(newCollege[msg.sender].permToAddStud == true){
+            newCollege[msg.sender].permToAddStud = false;
+        }
+    }
+
+    function unblockColToAddNewStudent(address _adminAdd) public {
+        roles[_adminAdd].admin = _adminAdd;
+        require(owner == roles[_adminAdd].admin, "It is not an admin User");
+        if(newCollege[msg.sender].permToAddStud == false){
+            newCollege[msg.sender].permToAddStud = true;
+        }
+    }
+}
+
